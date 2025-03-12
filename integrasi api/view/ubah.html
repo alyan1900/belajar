@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ubah Data</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #e8fdfd;
+      font-family: 'Arial', sans-serif;
+      padding: 40px;
+    }
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .container:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+    .form-label {
+      font-weight: bold;
+      color: #333;
+    }
+    button[type="submit"] {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+    h2 {
+      color: #0d6efd;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .fa-upload {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container w-50 py-4 rounded-3 shadow">
+    <h2>Ubah Data</h2>
+    <form id="formUpdate">
+      <div class="mb-3">
+        <label class="form-label"><i class="fas fa-upload"></i> Upload Foto</label>
+        <input type="file" class="form-control" name="foto" id="foto">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">ID Siswa</label>
+        <input type="text" class="form-control" name="id_siswa" id="id_siswa" placeholder="Masukan ID">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Nama Lengkap</label>
+        <input type="text" class="form-control" name="nama_lengkap" id="nama_lengkap" placeholder="Masukan Nama Lengkap">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Jenis Kelamin</label>
+        <select class="form-select" name="jenis_kelamin" id="jenis_kelamin" aria-label="Default select example">
+          <option selected disabled>Pilih Jenis Kelamin</option>
+          <option value="Laki-laki">Laki-laki</option>
+          <option value="Perempuan">Perempuan</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Tanggal Daftar</label>
+        <input type="date" class="form-control" name="tanggal_daftar" id="tanggal_daftar">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Kelas</label>
+        <input type="text" class="form-control" name="kelas" id="kelas" placeholder="Masukan Kelas">
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Ubah</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id_siswa = urlParams.get("id");
+
+      if (!id_siswa) {
+        alert("ID siswa tidak ditemukan");
+        return;
+      }
+
+      fetch(`/siswa/${id_siswa}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Gagal mengambil data siswa.");
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.length > 0) {
+            const tanggalRaw = data[0].tanggal_daftar;
+            const tanggal = new Date(tanggalRaw).toISOString().split("T")[0];
+
+            document.getElementById("id_siswa").value = data[0].id_siswa;
+            document.getElementById("nama_lengkap").value = data[0].nama_lengkap;
+            document.getElementById("jenis_kelamin").value = data[0].jenis_kelamin;
+            document.getElementById("tanggal_daftar").value = tanggal;
+            document.getElementById("kelas").value = data[0].kelas;
+          }
+        })
+        .catch(error => {
+          alert("Terjadi kesalahan: " + error.message);
+        });
+
+      document.getElementById("formUpdate").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const updateData = new FormData();
+        const fileInput = document.getElementById("foto").files[0];
+
+        if (fileInput) {
+          updateData.append("foto", fileInput);
+        }
+
+        updateData.append("nama_lengkap", document.getElementById("nama_lengkap").value);
+        updateData.append("jenis_kelamin", document.getElementById("jenis_kelamin").value);
+        updateData.append("tanggal_daftar", document.getElementById("tanggal_daftar").value);
+        updateData.append("kelas", document.getElementById("kelas").value);
+
+        fetch(`/siswa/${id_siswa}`, {
+          method: "PUT",
+          body: updateData
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Gagal memperbarui data.");
+            }
+            return response.text();
+          })
+          .then(message => {
+            localStorage.setItem("succesMessage", "Data berhasil diupdate");
+            window.location.href = "index.html";
+          })
+          .catch(error => {
+            alert("Terjadi kesalahan: " + error.message);
+          });
+      });
+    });
+  </script>
+</body>
+</html>
